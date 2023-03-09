@@ -1,0 +1,43 @@
+//INFO: To mark stuff as done (or undo it) press ALT + D
+
+Program:
+    ✔ GUI/CLI @done(23-03-09 16:44)
+    Connection requirements:
+        ☐ Unique ID
+        ✔ Port and server IP @done(23-03-09 16:45)
+        ✔ Client IP (and optional listen port) @done(23-03-09 16:46)
+    Host setup:
+        ☐ Create a new server if we are the first instance
+        ☐ Join an existing server if one exists
+        ☐ Automatically migrate hosts if the server ends
+    Messaging:
+        ✔ Broadcast messages @done(23-03-09 16:47)
+        ✔ Private messaging @done(23-03-09 16:47)
+    Programming principles:
+        Modularity using design patterns:
+            ✔ Object Oriented Programming @done(23-03-09 16:49)
+            ☐ Inheritance
+            ☐ Polymorphism
+        ☐ JUnit testing
+        ☐ Fault tolerance (i.e. error handling and assertions)
+        ☐ Component based development (ties into modularity, i.e. making parts of the program rusable)
+
+Demonstration:
+    ☐ Report and implementation
+    ☐ Demonstration video
+    A - Scenario demonstration:
+        ☐ Run one server
+        ☐ Run three clients
+        ☐ Demonstrate how the cooridinator works
+        Send a message from one of the clients and reply back to it:
+            ☐ Show broadcast messaging
+            ☐ Show private messaging
+            ☐ Quit one client (NOT the coordinator) and show that the other two clients can still communicate
+            ☐ Run another client
+            ☐ Quit the coordinator and show how a new coordinator is elected
+    B - Implementation inspection:
+        ☐ Highlight your code that implements differernt design patterns
+        ☐ Highlight your code that implements differernt components
+        ☐ Highlight your code that implements differernt JUnit tests
+
+//TODO: Implement the rest of the coursework specification to the checklist.
