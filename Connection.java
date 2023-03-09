@@ -41,14 +41,17 @@ public class Connection implements Runnable {
                 if (newLine.toLowerCase().startsWith("/quit")) {
                     return;
                 } else if (newLine.startsWith("/msg")) {
+                    //this block will send a private message if it is prefixed with "/msg" and contains a user id and then message body.
                     String[] parts = newLine.split(" ", 3);
+                    if (parts.length != 3) //If the message does not contain 3 parts, i.e. prefix, id and body, continue to the next loop iteration.
+                        continue;
                     String receiver = parts[1];
                     String message = parts[2];
                     server.privateBroadcast(message, name, receiver);
          
                 } else {
+                    //fall back to broadcasting a message.
                     server.broadcast(name + ": " + newLine);
-                 
                 }
                 
             }
