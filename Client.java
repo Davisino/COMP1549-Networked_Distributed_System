@@ -53,6 +53,7 @@ public class Client {
         // Send on enter then clear to prepare for next message
         textField.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
+                //the stream write here sends the message directly to the server with no pre-processing by the client.
                 out.println(textField.getText());
                 textField.setText("");
             }
@@ -68,6 +69,7 @@ public class Client {
         );
     }
 
+    //All stream operations peformned here are responsible for incoming server events.
     private void run() throws IOException {
         try {
             Socket socket = new Socket(serverAddress, 59001);
@@ -101,11 +103,12 @@ public class Client {
     public static void main(String[] args) throws Exception {
     	// creates a new client with the ip address from the arguments 
     
-        if (args.length != 1) {
-            System.err.println("Pass the server IP as the sole command line argument");
-            return;
-        }
-        Client client = new Client(args[0]);
+        // if (args.length != 1) {
+        //     System.err.println("Pass the server IP as the sole command line argument");
+        //     return;
+        // }
+        //String host = "localhost";
+        Client client = new Client("localhost");
         client.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         client.frame.setVisible(true);
         client.run();
