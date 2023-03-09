@@ -34,8 +34,8 @@ public class Server {
         users = new ArrayList<>();
         Server server = new Server();
         System.out.println("The chat server is running...");
-        
-        String ipAddress = "0.0.0.0"; // replace with your local IP address
+        // need to change from here below;
+        String ipAddress = "0.0.0.0";
         int port = 59001;
         
         ExecutorService pool = Executors.newFixedThreadPool(500);
@@ -89,11 +89,9 @@ public class Server {
     public void privateBroadcast(String message, String sender, String receiver) throws IOException{
         Connection senderConnection = connections.get(sender);
         Connection receiverConnection = connections.get(receiver);
-   
     
         senderConnection.sendPrivateMessage("To >> "+ receiver + " >> " + message);
         receiverConnection.sendPrivateMessage("From >> " + sender + " >> " + message);
-
     }
     public Map<String, Connection> getConnections() {
     	return connections;

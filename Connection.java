@@ -9,6 +9,7 @@ import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.UUID;
 
 public class Connection implements Runnable {
 //    private User client;
@@ -125,9 +126,12 @@ public class Connection implements Runnable {
             synchronized (users) {
 
                 if (!username.isEmpty()) {
-                    String ipAddress = socket.getInetAddress().getHostAddress();     
+                    String ipAddress = socket.getInetAddress().getHostAddress();
+                   
                     int portNumber = socket.getPort();
-                    users.add(new User(username, ipAddress, portNumber));
+                    // generates a unique id for the new user.
+                    String id = UUID.randomUUID().toString();
+                    users.add(new User(id,username, ipAddress, portNumber));
                     break;
                 }
             }

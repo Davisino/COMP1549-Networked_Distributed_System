@@ -1,18 +1,22 @@
 
 
 public class User {
+	private String id;
     private String name;
     private String address;
     private int port;
     private boolean isCoordinator;
 
-    public User(String name, String address, int port) {
+    public User(String id, String name, String address, int port) {
+    	this.id= id;
         this.name = name;
         this.address = address;
         this.port = port;
         this.isCoordinator = false;
     }
-
+    public String getId() {
+    	return id;
+    }
     public String getName() {
         return name;
     }
