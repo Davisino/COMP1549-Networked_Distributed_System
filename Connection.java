@@ -30,30 +30,25 @@ public class Connection implements Runnable {
     public void run() {
         String newLine;
 		try {
-            
-            // Now that a successful name has been chosen, add the socket's print writer
-            // to the set of all writers so this client can receive broadcast messages.
-            // But BEFORE THAT, let everyone else know that the new person has joined!
-        
+			
 			output.println("NAMEACCEPTED " + name);
-			server.broadcast(name + " has joined");
+		
+			server.broadcastJoined(name + " has joined");
 			
             // Accept messages from this client and broadcast them.
             while (true) {
-                newLine = readMessage();
+                newLine = this.input.nextLine();
                 if (newLine.toLowerCase().startsWith("/quit")) {
                     return;
                 } else if (newLine.startsWith("/msg")) {
                     String[] parts = newLine.split(" ", 3);
                     String receiver = parts[1];
                     String message = parts[2];
-                    
                     server.privateBroadcast(message, name, receiver);
-                    
+         
                 } else {
-
-                    server.broadcast(newLine);
-                    
+                    server.broadcast(name + ": " + newLine);
+                 
                 }
                 
             }
@@ -71,9 +66,8 @@ public class Connection implements Runnable {
                     users.removeIf(user -> user.getName().equals(name));
                 }
                 try {
-					server.broadcast(name + " has left");
+					server.broadcastLeft(name + " has left");
 				} catch (IOException e) {
-	
 					e.printStackTrace();
 				}
             }
@@ -83,19 +77,20 @@ public class Connection implements Runnable {
 
 
     public void sendMessage(String message) throws IOException {
-    	String[] deter = message.split(" ", 3);
+    	// Send message to everyone 
+    	output.println("MESSAGE " + message);
 
-
-    	if (deter[2].equals("joined")) {
-    		System.out.println(deter[1]);
-        	System.out.println(deter[2]);
-            output.println("MESSAGE " + name + " has joined");
-    	} else {
-    		output.println("MESSAGE " + name + ": " + message);
-    	}
-       
+    }
+    public void hasJoined(String  message) throws IOException {
+    	// let everyone knows someone has joined
+    	output.println("MESSAGE " + message);
+    }
+    public void hasLeft(String message) throws IOException {
+    	// let everyone knows someone has left
+    	output.println("MESSAGE " + message);
     }
     public void sendPrivateMessage(String message) throws IOException {
+    	// Send private message to someone
     	output.println("PRIVATE " + message);
     }
 
@@ -116,12 +111,11 @@ public class Connection implements Runnable {
 //        heartbeatTimer.cancel();
 //    }
     public String receiveName() throws IOException {
-        // Keep requesting a name until we get a unique one.
+        
     	String username;
-    	
+    	// Keep requesting a name until we get a unique one.
         while (true) {
         	output.println("SUBMITNAME");
-
         	username = input.nextLine();
             
             if (username == null || username == "") {
@@ -131,14 +125,9 @@ public class Connection implements Runnable {
             synchronized (users) {
 
                 if (!username.isEmpty()) {
-
                     String ipAddress = socket.getInetAddress().getHostAddress();     
-
                     int portNumber = socket.getPort();
-
                     users.add(new User(username, ipAddress, portNumber));
-                    
-                 
                     break;
                 }
             }
@@ -148,15 +137,6 @@ public class Connection implements Runnable {
     	return username;
 
     }
-    public PrintWriter getOutput() {
-    	return output;
-    }
    
-    private String readMessage() {
-        String message = null;
-        message = input.nextLine();
-        return message;
-    }
-
 
 }

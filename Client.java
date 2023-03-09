@@ -77,16 +77,21 @@ public class Client {
             while (in.hasNextLine()) {
                 String line = in.nextLine();
                 if (line.startsWith("SUBMITNAME")) {
+                	// Handle SUBMITNAME; Prompts the user to type username
                     out.println(getName());
                 } else if (line.startsWith("NAMEACCEPTED")) {
+                	// Handle NAMEACCEPTED; Set chatbox title to username and make chat editable
                     this.frame.setTitle("Chatter - " + line.substring(13));
                     textField.setEditable(true);
                 } else if (line.startsWith("MESSAGE")) {
+                	// Handle MESSAGE; Display message to chatbox
                     messageArea.append(line.substring(8) + "\n");
                 } else if (line.startsWith("PRIVATE")) {
+                	// Handle PRIVATE; Display message to chatbox to specific client (handled by server);
                     messageArea.append(line.substring(8) + "\n");
                 } 
             }
+            
         } finally {
             frame.setVisible(false);
             frame.dispose();
@@ -94,6 +99,8 @@ public class Client {
     }
 
     public static void main(String[] args) throws Exception {
+    	// creates a new client with the ip address from the arguments 
+    
         if (args.length != 1) {
             System.err.println("Pass the server IP as the sole command line argument");
             return;
