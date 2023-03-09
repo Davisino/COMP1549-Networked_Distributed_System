@@ -1,6 +1,8 @@
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Set;
@@ -33,19 +35,26 @@ public class Server {
         Server server = new Server();
         System.out.println("The chat server is running...");
         
+        String ipAddress = "0.0.0.0"; // replace with your local IP address
+        int port = 59001;
+        
         ExecutorService pool = Executors.newFixedThreadPool(500);
-        try (ServerSocket listener = new ServerSocket(59001)) {
+        InetSocketAddress address = new InetSocketAddress(ipAddress, port);
+        ServerSocket listener = new ServerSocket();
+        listener.bind(address);
+        
+        try (listener) {
             while (true) {
                 Socket socket = listener.accept();
                 Connection connection = new Connection(socket, server);
                
                 String name = connection.receiveName();
+                
                 server.addConnection(name, connection);
     
                 pool.execute(connection);
             }
         }
-       
        
     }
 
@@ -64,6 +73,19 @@ public class Server {
     		connection.sendMessage(message);
     	}
     }
+    
+    public void broadcastJoined(String message) throws IOException {
+    	for (Connection connection: connections.values()) {
+    		connection.hasJoined(message);
+    	}
+    }
+    public void broadcastLeft(String message) throws IOException {
+    	for (Connection connection: connections.values()) {
+    		connection.hasLeft(message);
+ 
+    	}
+    }
+    
     public void privateBroadcast(String message, String sender, String receiver) throws IOException{
         Connection senderConnection = connections.get(sender);
         Connection receiverConnection = connections.get(receiver);
