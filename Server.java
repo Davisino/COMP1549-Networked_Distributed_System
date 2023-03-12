@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Scanner;
 import java.util.concurrent.*;
 
@@ -27,8 +28,10 @@ import java.util.concurrent.*;
  */
 public class Server {
     private static List<User> users;
-    
     private static Map<String, Connection> connections = new HashMap<>();
+    private static Map<String, Message> history = new HashMap<>();
+    
+
     
     public static void main(String[] args) throws IOException {
         users = new ArrayList<>();
@@ -57,13 +60,22 @@ public class Server {
         }
        
     }
-
+    
     public void addConnection(String name, Connection connection) {
     	connections.put(name, connection);
     }
-    public void removeConnection(String name) {
-    	connections.remove(name);
+    public void removeConnection(String keyToRemove) {
+    	connections.remove(keyToRemove);
     }
+    public void removeUser(String nameToDelete) {
+    	for (User user: users) {
+    		if (user.getName().equals(nameToDelete)) {
+    			users.remove(user);
+    			break;
+    		}
+    	}
+    }
+    // add user() 
     
     public List<User> getUsers() {
     	return users;
@@ -85,6 +97,19 @@ public class Server {
  
     	}
     }
+    public void saveMessage(String name, Message message) {
+    	history.put(name, message);
+    }
+    public String getUserId(String name) {
+    	String id = null;
+    	for (User user: users) {
+    		if (user.getName().equals(name)) {
+    			id = user.getId();
+    			break;
+    		}
+    	}
+    	return id;
+    }
     
     public void privateBroadcast(String message, String sender, String receiver) throws IOException{
         Connection senderConnection = connections.get(sender);
@@ -93,7 +118,24 @@ public class Server {
         senderConnection.sendPrivateMessage("To >> "+ receiver + " >> " + message);
         receiverConnection.sendPrivateMessage("From >> " + sender + " >> " + message);
     }
+    public void personalBroadcast(String name, String content) throws IOException {
+    	Connection personalClient = connections.get(name);
+    	personalClient.sendMessage(content);
+    }
     public Map<String, Connection> getConnections() {
     	return connections;
     }
+    public Map<String, Message> getMessages() {
+    	return history;
+    }
+    public User getUser(String name) {
+    	User res = null;
+    	for (User user:users) {
+    		if (user.getName().equals(name)) {
+    			res = user;
+    		}
+    	}
+    	return res;
+    }
+    
 }
