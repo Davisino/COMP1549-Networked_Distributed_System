@@ -1,17 +1,11 @@
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Set;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
+import java.util.Random;
 import java.util.concurrent.*;
 
 /**
@@ -26,76 +20,78 @@ import java.util.concurrent.*;
  * logging. Another is to accept a lot of fun commands, like Slack.
  */
 public class Server {
-    private static List<User> users;
-    
-    private static Map<String, Connection> connections = new HashMap<>();
-    
+    private static Random random = new Random();
+
+    private static Map<Integer, Connection> connections = new HashMap<>();
+
     public static void main(String[] args) throws IOException {
-        users = new ArrayList<>();
         Server server = new Server();
         System.out.println("The chat server is running...");
-        
+
         String ipAddress = "0.0.0.0"; // replace with your local IP address
         int port = 59001;
-        
+
         ExecutorService pool = Executors.newFixedThreadPool(500);
         InetSocketAddress address = new InetSocketAddress(ipAddress, port);
         ServerSocket listener = new ServerSocket();
         listener.bind(address);
-        
+
         try (listener) {
             while (true) {
                 Socket socket = listener.accept();
-                Connection connection = new Connection(socket, server);
-               
-                String name = connection.receiveName();
-                
-                server.addConnection(name, connection);
-    
+
+                //Generate Id for the users with random by using random numbers
+                int id;
+                do { id = random.nextInt(); }
+                while(connections.containsKey(id));
+                Connection connection = new Connection(id, socket, server);
+
+                server.addConnection(id, connection);
                 pool.execute(connection);
+
+                connection.SendUsers();
             }
         }
-       
+
     }
 
-    public void addConnection(String name, Connection connection) {
-    	connections.put(name, connection);
+    public void addConnection(Integer id, Connection connection) {
+    	connections.put(id, connection);
     }
-    public void removeConnection(String name) {
-    	connections.remove(name);
+
+    public void removeConnection(Integer id) {
+    	connections.remove(id);
     }
-    
-    public List<User> getUsers() {
-    	return users;
-    }
+
     public void broadcast(String message) throws IOException {
     	for (Connection connection: connections.values()) {
     		connection.sendMessage(message);
     	}
     }
-    
-    public void broadcastJoined(String message) throws IOException {
+
+    public void broadcastJoined(Integer id) throws IOException {
     	for (Connection connection: connections.values()) {
-    		connection.hasJoined(message);
+    		connection.hasJoined(id);
     	}
     }
-    public void broadcastLeft(String message) throws IOException {
+    public void broadcastLeft(Integer id) throws IOException {
     	for (Connection connection: connections.values()) {
-    		connection.hasLeft(message);
- 
+            if (connection.getId() != id)
+    		    connection.hasLeft(id);
     	}
     }
-    
-    public void privateBroadcast(String message, String sender, String receiver) throws IOException{
+
+    public void privateBroadcast(String message, Integer sender, Integer receiver) throws IOException{
         Connection senderConnection = connections.get(sender);
         Connection receiverConnection = connections.get(receiver);
-   
-    
-        senderConnection.sendPrivateMessage("To >> "+ receiver + " >> " + message);
-        receiverConnection.sendPrivateMessage("From >> " + sender + " >> " + message);
+
+
+        senderConnection.sendPrivateMessage("To >> "+ receiverConnection.getName() + " >> " + message);
+        receiverConnection.sendPrivateMessage("From >> " + senderConnection.getName() + " >> " + message);
 
     }
-    public Map<String, Connection> getConnections() {
+    public Map<Integer, Connection> getConnections() {
     	return connections;
     }
+
 }

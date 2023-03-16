@@ -4,6 +4,8 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
 import java.awt.BorderLayout;
 import javax.swing.JFrame;
@@ -25,14 +27,14 @@ import javax.swing.JTextField;
  * following this string should be displayed in its message area.
  */
 public class Client {
-	
     String serverAddress;
     Scanner in;
     PrintWriter out;
     JFrame frame = new JFrame("Chatter");
     JTextField textField = new JTextField(50);
     JTextArea messageArea = new JTextArea(16, 50);
-    
+    Map<Integer, User> users = new HashMap<Integer, User>();
+
 
     /**
      * Constructs the client by laying out the GUI and registering a listener with the
@@ -71,8 +73,9 @@ public class Client {
 
     //All stream operations peformned here are responsible for incoming server events.
     private void run() throws IOException {
+        Socket socket = null;
         try {
-            Socket socket = new Socket(serverAddress, 59001);
+            socket = new Socket(serverAddress, 59001);
             in = new Scanner(socket.getInputStream());
             out = new PrintWriter(socket.getOutputStream(), true);
 
@@ -91,10 +94,53 @@ public class Client {
                 } else if (line.startsWith("PRIVATE")) {
                 	// Handle PRIVATE; Display message to chatbox to specific client (handled by server);
                     messageArea.append(line.substring(8) + "\n");
-                } 
+                }
+                else if (line.startsWith("USERS"))
+                {
+                    users = new HashMap<Integer, User>();
+
+                    String[] data = line.substring("USERS".length() + 1).split(","); //+1 to remove the space
+                    for (int i = 0; i < data.length; i++)
+                    {
+                        String[] parts = data[i].split(":");
+                        String ipAddress = parts[2];
+                        if (ipAddress.startsWith("/"))
+                            ipAddress = ipAddress.substring(1);
+                        User user = new User(Integer.parseInt(parts[0]), parts[1], ipAddress);
+                        users.put(user.getId(), user);
+                    }
+                }
+                else if (line.startsWith("USER"))
+                {
+                    //Used for a status update about a connection.
+                    String[] parts = line.substring("USER".length() + 1).split(":");
+                    Integer id = Integer.parseInt(parts[0]);
+                    String name = parts[1];
+                    String ipAddress = parts[2];
+                    if (ipAddress.startsWith("/"))
+                        ipAddress = ipAddress.substring(1);
+                    boolean status = Boolean.parseBoolean(parts[4]); //Skip 3 as port is sent along with the IP address.
+
+                    boolean exists = users.containsKey(id);
+
+                    if (status && !exists) //If they have connected add the user.
+                    {
+                        User user = new User(id, name, ipAddress);
+                        users.put(user.getId(), user);
+
+                        messageArea.append(user.getName() + " has connected.\n");
+                    }
+                    else if (!status && exists) //They have disconnected, remove them.
+                    {
+                        users.remove(id);
+
+                        messageArea.append(name + " has disconnected.\n");
+                    }
+                }
             }
-            
         } finally {
+            if (socket != null)
+                socket.close();
             frame.setVisible(false);
             frame.dispose();
         }

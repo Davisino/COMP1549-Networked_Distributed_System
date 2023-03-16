@@ -1,16 +1,18 @@
-
-
 public class User {
-    private String name;
+    private int id = -1;
     private String address;
-    private int port;
-    private boolean isCoordinator;
+    protected String name;
+    protected boolean isCoordinator;
 
-    public User(String name, String address, int port) {
+    public User(int ID, String name, String address) {
+        this.id = ID;
         this.name = name;
         this.address = address;
-        this.port = port;
         this.isCoordinator = false;
+    }
+
+    public int getId() {
+        return id;
     }
 
     public String getName() {
@@ -19,10 +21,6 @@ public class User {
 
     public String getAddress() {
         return address;
-    }
-
-    public int getPort() {
-        return port;
     }
 
     public boolean isCoordinator() {

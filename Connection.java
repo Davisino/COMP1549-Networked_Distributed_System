@@ -1,40 +1,37 @@
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Scanner;
-import java.util.Timer;
-import java.util.TimerTask;
 
-public class Connection implements Runnable {
+public class Connection extends User implements Runnable {
 //    private User client;
     private Socket socket;
     private Scanner input;
     private PrintWriter output;
+    private final Server server;
 //    private Timer heartbeatTimer;
-	private Server server;
-	private String name;
-	
-    public Connection(Socket socket, Server server) throws IOException {
-        this.socket = socket;
+
+    public Connection(int id, Socket socket, Server server) throws IOException {
+        super(id, "", socket.getRemoteSocketAddress().toString());
+
         this.server = server;
-        this.input = new Scanner(socket.getInputStream());
-        this.output = new PrintWriter(socket.getOutputStream(), true);
-        
+        input = new Scanner(socket.getInputStream());
+        output = new PrintWriter(socket.getOutputStream(), true);
+
+        //I assume this method is blocking so we will wait until we have a name before continuing (not necessarily ideal for the connection initiliastion).
+        super.name = receiveName();
+
 //        this.heartbeatTimer = new Timer();
     }
     public void run() {
         String newLine;
 		try {
-			
+
 			output.println("NAMEACCEPTED " + name);
-		
-			server.broadcastJoined(name + " has joined");
-			
+
+			server.broadcastJoined(getId());
+
             // Accept messages from this client and broadcast them.
             while (true) {
                 newLine = this.input.nextLine();
@@ -43,54 +40,51 @@ public class Connection implements Runnable {
                 } else if (newLine.startsWith("/msg")) {
                     //this block will send a private message if it is prefixed with "/msg" and contains a user id and then message body.
                     String[] parts = newLine.split(" ", 3);
-                    if (parts.length != 3) //If the message does not contain 3 parts, i.e. prefix, id and body, continue to the next loop iteration.
-                        continue;
+                   // if (parts.length != 3) //If the message does not contain 3 parts, i.e. prefix, id and body, continue to the next loop iteration.
+                        //continue;
+                    //TODO: Send ID not name.
                     String receiver = parts[1];
                     String message = parts[2];
-                    server.privateBroadcast(message, name, receiver);
-         
+                    // server.privateBroadcast(message, super.getId(), receiver);
                 } else {
                     //fall back to broadcasting a message.
                     server.broadcast(name + ": " + newLine);
                 }
-                
             }
         } catch (Exception e) {
             System.out.println(e);
- 
         } finally {
-            if (output != null) {	
-                server.removeConnection(name);
-            }
+            try { server.broadcastLeft(getId()); } catch (IOException e) {}
+            server.removeConnection(super.getId());
             if (name != null) {
                 System.out.println(name + " is leaving");
-                List<User> users = server.getUsers();
-                synchronized (users) {
-                    users.removeIf(user -> user.getName().equals(name));
-                }
-                try {
-					server.broadcastLeft(name + " has left");
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
             }
-            try { socket.close(); } catch (IOException e) {}
+            try
+            {
+                if (socket != null)
+                    socket.close();
+            }
+            catch (IOException e) {}
         }
     }
 
 
     public void sendMessage(String message) throws IOException {
-    	// Send message to everyone 
+    	// Send message to everyone
     	output.println("MESSAGE " + message);
 
     }
-    public void hasJoined(String  message) throws IOException {
+    public void hasJoined(Integer id) throws IOException {
     	// let everyone knows someone has joined
-    	output.println("MESSAGE " + message);
+        sendStatusUpdate(id, true);
     }
-    public void hasLeft(String message) throws IOException {
+    public void hasLeft(Integer id) throws IOException {
     	// let everyone knows someone has left
-    	output.println("MESSAGE " + message);
+        sendStatusUpdate(id, false);
+    }
+    private void sendStatusUpdate(Integer id, boolean connected)
+    {
+        output.println("USER " + seralizeUser(id) + ":" + connected);
     }
     public void sendPrivateMessage(String message) throws IOException {
     	// Send private message to someone
@@ -107,39 +101,40 @@ public class Connection implements Runnable {
 //                    System.out.println("Error sending heartbeat: " + e.getMessage());
 //                }
 //            }
-//        }, 0, 5000); 
+//        }, 0, 5000);
 //    }
 //
 //    public void stopHeartbeat() {
 //        heartbeatTimer.cancel();
 //    }
-    public String receiveName() throws IOException {
-        
-    	String username;
-    	// Keep requesting a name until we get a unique one.
+    // public String receiveName() throws IOException {
+    private String receiveName() throws IOException {
+    	//Keep requesting a name until we get a valid one.
         while (true) {
         	output.println("SUBMITNAME");
-        	username = input.nextLine();
-            
-            if (username == null || username == "") {
+        	String username = input.nextLine();
+
+            if (username == null || username.equals(""))
                 continue;
-            }
-            List<User> users = server.getUsers();
-            synchronized (users) {
 
-                if (!username.isEmpty()) {
-                    String ipAddress = socket.getInetAddress().getHostAddress();     
-                    int portNumber = socket.getPort();
-                    users.add(new User(username, ipAddress, portNumber));
-                    break;
-                }
-            }
-        
+            return username;
         }
-        name = username;
-    	return username;
-
     }
-   
+    public void SendUsers()
+    {
+        String data = "USERS ";
+        for (Map.Entry<Integer, Connection> entry : server.getConnections().entrySet())
+            data += seralizeUser(entry.getKey()) + ",";
+        if (data.endsWith(","))
+            data = data.substring(0, data.length() - 1);
+        output.println(data);
+    }
 
+    private String seralizeUser(Integer id)
+    {
+        Connection connection = server.getConnections().get(id);
+        return connection.getId()
+            + ":" + connection.getName()
+            + ":" + connection.getAddress();
+    }
 }
