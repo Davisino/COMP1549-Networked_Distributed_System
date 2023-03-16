@@ -14,8 +14,20 @@ public class Message {
         this.content = content;
         this.timestampt = timestampt;
     }
-    public String getContent() {
+    public String getFormattedContent() {
     	return "<" + timestampt + ">" + senderName + " to " + receiverName + ": " + content;
+    }
+    public String getPlainContent() {
+    	return content;
+    }
+    public String getSender() {
+    	return senderName;
+    }
+    public String getReceiver() {
+    	return receiverName;
+    }
+    public String getTimestampt() {
+    	return timestampt;
     }
 
     // Other methods such as equals(), hashCode(), toString() can be added as needed

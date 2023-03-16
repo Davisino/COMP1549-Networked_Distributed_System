@@ -62,7 +62,7 @@ public class Client {
     private String getName() {
         return JOptionPane.showInputDialog(
             frame,
-            "Choose a screen name:",
+            "Enter your username:",
             "Screen name selection",
             JOptionPane.PLAIN_MESSAGE
         );

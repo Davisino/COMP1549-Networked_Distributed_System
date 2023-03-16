@@ -30,9 +30,7 @@ public class Server {
     private static List<User> users;
     private static Map<String, Connection> connections = new HashMap<>();
     private static Map<String, Message> history = new HashMap<>();
-    
-
-    
+   
     public static void main(String[] args) throws IOException {
         users = new ArrayList<>();
         Server server = new Server();

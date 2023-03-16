@@ -80,7 +80,6 @@ public class Connection implements Runnable {
             	// remove it and choose a new coordinator if size > 1
                 boolean isCoordinator = server.getUser(name).isCoordinator() == (true);
                 server.removeConnection(name);
-                System.out.println(server.getConnections().size());
                 if (isCoordinator == true && server.getConnections().size() >= 1) {
                 	// Random assignment of coordinator.
         			int randomIndex = new Random().nextInt(server.getUsers().size());
