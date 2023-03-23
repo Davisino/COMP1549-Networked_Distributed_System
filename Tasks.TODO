@@ -6,7 +6,7 @@ Program:
         ✔ Unique ID @done(23-03-09 22:27)
         ✔ Port and server IP @done(23-03-09 16:45)
         ✔ Client IP (and optional listen port) @done(23-03-09 16:46)
-        ☐ Send alredy connected clients to new peer
+        ✔ Send alredy connected clients to new peer @done(23-03-16 16:44)
     Host setup:
         ☐ Create a new server if we are the first instance
         ☐ Join an existing server if one exists

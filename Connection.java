@@ -11,6 +11,7 @@ public class Connection extends User implements Runnable {
     private PrintWriter output;
     private final Server server;
 //    private Timer heartbeatTimer;
+    public Object list;
 
     public Connection(int id, Socket socket, Server server) throws IOException {
         super(id, "", socket.getRemoteSocketAddress().toString());
@@ -45,7 +46,7 @@ public class Connection extends User implements Runnable {
                     //TODO: Send ID not name.
                     String receiver = parts[1];
                     String message = parts[2];
-                    // server.privateBroadcast(message, super.getId(), receiver);
+                    server.privateMessage("[Private message from " + super.getName() + "]: " + message, Integer.parseInt(receiver));
                 } else {
                     //fall back to broadcasting a message.
                     server.broadcast(name + ": " + newLine);
@@ -123,7 +124,7 @@ public class Connection extends User implements Runnable {
     public void SendUsers()
     {
         String data = "USERS ";
-        for (Map.Entry<Integer, Connection> entry : server.getConnections().entrySet())
+        for (Map.Entry<Integer, Connection> entry : server.connections.entrySet())
             data += seralizeUser(entry.getKey()) + ",";
         if (data.endsWith(","))
             data = data.substring(0, data.length() - 1);
@@ -132,7 +133,7 @@ public class Connection extends User implements Runnable {
 
     private String seralizeUser(Integer id)
     {
-        Connection connection = server.getConnections().get(id);
+        Connection connection = server.connections.get(id);
         return connection.getId()
             + ":" + connection.getName()
             + ":" + connection.getAddress();

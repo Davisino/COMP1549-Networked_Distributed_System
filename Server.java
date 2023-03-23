@@ -3,7 +3,9 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.*;
@@ -22,7 +24,7 @@ import java.util.concurrent.*;
 public class Server {
     private static Random random = new Random();
 
-    private static Map<Integer, Connection> connections = new HashMap<>();
+    public static Map<Integer, Connection> connections = new HashMap<>();
 
     public static void main(String[] args) throws IOException {
         Server server = new Server();
@@ -43,7 +45,7 @@ public class Server {
                 //Generate Id for the users with random by using random numbers
                 int id;
                 do { id = random.nextInt(); }
-                while(connections.containsKey(id));
+                while(connections.containsKey(id) && id != 0); //0 is the broadcast id.
                 Connection connection = new Connection(id, socket, server);
 
                 server.addConnection(id, connection);
@@ -52,7 +54,6 @@ public class Server {
                 connection.SendUsers();
             }
         }
-
     }
 
     public void addConnection(Integer id, Connection connection) {
@@ -74,6 +75,7 @@ public class Server {
     		connection.hasJoined(id);
     	}
     }
+
     public void broadcastLeft(Integer id) throws IOException {
     	for (Connection connection: connections.values()) {
             if (connection.getId() != id)
@@ -81,17 +83,10 @@ public class Server {
     	}
     }
 
-    public void privateBroadcast(String message, Integer sender, Integer receiver) throws IOException{
-        Connection senderConnection = connections.get(sender);
-        Connection receiverConnection = connections.get(receiver);
-
-
-        senderConnection.sendPrivateMessage("To >> "+ receiverConnection.getName() + " >> " + message);
-        receiverConnection.sendPrivateMessage("From >> " + senderConnection.getName() + " >> " + message);
-
+    public void privateMessage(String message, Integer receiverID) throws IOException {
+        for (Connection connection: connections.values()) {
+            if (connection.getId() == receiverID)
+                connection.sendPrivateMessage(message);
+        }
     }
-    public Map<Integer, Connection> getConnections() {
-    	return connections;
-    }
-
 }

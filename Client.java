@@ -1,6 +1,9 @@
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.Component;
+import java.awt.GridBagLayout;
+import java.awt.GridBagConstraints;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
@@ -8,11 +11,16 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 import java.awt.BorderLayout;
+import javax.swing.JRadioButton;
+import javax.swing.ButtonGroup;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+
 
 /**
  * A simple Swing-based client for the chat server. Graphically it is a frame with a text
@@ -33,8 +41,9 @@ public class Client {
     JFrame frame = new JFrame("Chatter");
     JTextField textField = new JTextField(50);
     JTextArea messageArea = new JTextArea(16, 50);
+    JPanel userListArea = new JPanel();
+    ButtonGroup userListButtons = new ButtonGroup();
     Map<Integer, User> users = new HashMap<Integer, User>();
-
 
     /**
      * Constructs the client by laying out the GUI and registering a listener with the
@@ -48,18 +57,152 @@ public class Client {
 
         textField.setEditable(false);
         messageArea.setEditable(false);
-        frame.getContentPane().add(textField, BorderLayout.SOUTH);
-        frame.getContentPane().add(new JScrollPane(messageArea), BorderLayout.CENTER);
-        frame.pack();
+
+        frame.setLayout(new GridBagLayout());
+
+        //Message log area.
+        GridBagConstraints chatAreaConstraints = new GridBagConstraints();
+        chatAreaConstraints.anchor = GridBagConstraints.CENTER;
+        chatAreaConstraints.fill = GridBagConstraints.BOTH;
+        chatAreaConstraints.gridx = 1;
+        chatAreaConstraints.gridy = 0;
+        chatAreaConstraints.weightx = 0.7;
+        frame.getContentPane().add(new JScrollPane(messageArea), chatAreaConstraints);
+
+        //Message input field.
+        GridBagConstraints inputFieldConstraints = new GridBagConstraints();
+        inputFieldConstraints.anchor = GridBagConstraints.CENTER;
+        inputFieldConstraints.fill = GridBagConstraints.BOTH;
+        inputFieldConstraints.gridx = 1;
+        inputFieldConstraints.gridy = 1;
+        inputFieldConstraints.weightx = 0.7;
+        frame.getContentPane().add(textField, inputFieldConstraints);
+
+        //User list.
+        GridBagConstraints userListConstraints = new GridBagConstraints();
+        userListConstraints.anchor = GridBagConstraints.CENTER;
+        userListConstraints.fill = GridBagConstraints.BOTH;
+        userListConstraints.gridx = 0;
+        userListConstraints.gridy = 0;
+        userListConstraints.gridheight = 2;
+        userListConstraints.weightx = 0.3;
+        AddUserToPanel(new User(0, "All", "0.0.0.0"));
+        userListButtons.getElements().nextElement().setSelected(true);
+        frame.getContentPane().add(new JScrollPane(userListArea), userListConstraints);
+
+        frame.setSize(600, 400);
 
         // Send on enter then clear to prepare for next message
         textField.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                //the stream write here sends the message directly to the server with no pre-processing by the client.
-                out.println(textField.getText());
+                JRadioButton selectedButton = null;
+                for (Component child : userListArea.getComponents())
+                {
+                    if (child instanceof JRadioButton)
+                    {
+                        JRadioButton button = (JRadioButton)child;
+                        if (button.isSelected())
+                        {
+                            selectedButton = button;
+                            break;
+                        }
+                    }
+                }
+                Integer selectedUserId = (Integer)selectedButton.getClientProperty("user_id");
+                if (selectedUserId == 0)
+                {
+                    //Boradcast.
+                    out.println(textField.getText());
+                }
+                else
+                {
+                    //Send a private message using the selected user's id.
+                    out.println("/msg " + selectedUserId + " " + textField.getText());
+                    messageArea.append(textField.getText() + "\n");
+                }
                 textField.setText("");
             }
         });
+    }
+
+    private void AddUserToPanel(User user)
+    {
+        //Create the user entry.
+        JRadioButton userEntry = new JRadioButton();
+        userEntry.putClientProperty("user_id", user.getId());
+        userEntry.setText(user.name);
+
+        userListButtons.add(userEntry);
+
+        GridBagConstraints userEntryConstraints = new GridBagConstraints();
+        userEntryConstraints.gridx = 0;
+        userEntryConstraints.gridy = GetUsersUICount();
+        userEntryConstraints.fill = GridBagConstraints.HORIZONTAL;
+        userEntryConstraints.weightx = 1.0;
+
+        userListArea.add(userEntry, userEntryConstraints);
+
+        UpdateUserPanel();
+    }
+
+    private void RemoveUserFromPanel(Integer id)
+    {
+        for (Component child : userListArea.getComponents())
+        {
+            if (child instanceof JRadioButton)
+            {
+                JRadioButton button = (JRadioButton)child;
+                if (button.getClientProperty("user_id") == id)
+                {
+                    userListArea.remove(button);
+                    userListButtons.remove(button);
+                    UpdateUserPanel();
+                }
+                else if (button.getClientProperty("user_id") == (Integer)0)
+                {
+                    button.setSelected(true);
+                }
+            }
+        }
+    }
+
+    private int GetUsersUICount()
+    {
+        int count = 0;
+        for (Component child : userListArea.getComponents())
+            if (child instanceof JRadioButton)
+                count++;
+        return count;
+    }
+
+    private void UpdateUserPanel()
+    {
+        //Get the filler.
+        Object _filler = userListArea.getClientProperty("filler");
+        if (!(_filler instanceof JLabel))
+        {
+            _filler = new JLabel();
+            userListArea.putClientProperty("filler", _filler);
+        }
+        JLabel filler = (JLabel)_filler;
+
+        //Get the child count.
+        int childCount = GetUsersUICount();
+
+        //Remove the old filler.
+        userListArea.remove(filler);
+
+        //Update the filler's position.
+        GridBagConstraints userListFillerConstraints = new GridBagConstraints();
+        userListFillerConstraints.gridx = 0;
+        userListFillerConstraints.gridy = childCount;
+        userListFillerConstraints.weighty = 1.0;
+
+        //Insert the updated filler.
+        userListArea.add(filler, userListFillerConstraints);
+
+        //Refresh the UI.
+        userListArea.revalidate();
     }
 
     private String getName() {
@@ -108,6 +251,7 @@ public class Client {
                             ipAddress = ipAddress.substring(1);
                         User user = new User(Integer.parseInt(parts[0]), parts[1], ipAddress);
                         users.put(user.getId(), user);
+                        AddUserToPanel(user);
                     }
                 }
                 else if (line.startsWith("USER"))
@@ -129,12 +273,16 @@ public class Client {
                         users.put(user.getId(), user);
 
                         messageArea.append(user.getName() + " has connected.\n");
+
+                        AddUserToPanel(user);
                     }
                     else if (!status && exists) //They have disconnected, remove them.
                     {
                         users.remove(id);
 
                         messageArea.append(name + " has disconnected.\n");
+
+                        RemoveUserFromPanel(id);
                     }
                 }
             }
