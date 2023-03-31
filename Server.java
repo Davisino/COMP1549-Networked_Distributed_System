@@ -1,26 +1,14 @@
-
+package cw;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.*;
 
-/**
- * A multithreaded chat room server. When a client connects the server requests a screen
- * name by sending the client the text "SUBMITNAME", and keeps requesting a name until
- * a unique one is received. After a client submits a unique name, the server acknowledges
- * with "NAMEACCEPTED". Then all messages from that client will be broadcast to all other
- * clients that have submitted a unique screen name. The broadcast messages are prefixed
- * with "MESSAGE".
- *
- * This is just a teaching example so it can be enhanced in many ways, e.g., better
- * logging. Another is to accept a lot of fun commands, like Slack.
- */
+
 public class Server {
     private static Random random = new Random();
 
@@ -29,8 +17,9 @@ public class Server {
     public static void main(String[] args) throws IOException {
         Server server = new Server();
         System.out.println("The chat server is running...");
-
+        // ip address set to 0.0.0.0 so that everyone can join without restriccion.
         String ipAddress = "0.0.0.0"; // replace with your local IP address
+        
         int port = 59001;
 
         ExecutorService pool = Executors.newFixedThreadPool(500);
@@ -47,15 +36,14 @@ public class Server {
                 do { id = random.nextInt(); }
                 while(connections.containsKey(id) && id != 0); //0 is the broadcast id.
                 Connection connection = new Connection(id, socket, server);
-
                 server.addConnection(id, connection);
                 pool.execute(connection);
-
                 connection.SendUsers();
             }
         }
     }
 
+    // All methods from the servers. 
     public void addConnection(Integer id, Connection connection) {
     	connections.put(id, connection);
     }
@@ -88,5 +76,13 @@ public class Server {
             if (connection.getId() == receiverID)
                 connection.sendPrivateMessage(message);
         }
+    }
+    public Map<Integer, Connection> getConnection() {
+    	return connections;
+    }
+    public void personalBroadcast(Integer id, String content) throws IOException {
+    	Connection personalClient = connections.get(id);
+    
+    	personalClient.sendMessage(content);
     }
 }

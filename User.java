@@ -1,9 +1,12 @@
+package cw;
+
+// This class is the base class for the connection.
 public class User {
     private int id = -1;
     private String address;
     protected String name;
     protected boolean isCoordinator;
-
+    
     public User(int ID, String name, String address) {
         this.id = ID;
         this.name = name;
@@ -30,5 +33,5 @@ public class User {
         this.isCoordinator = isCoordinator;
     }
 
-    // Other methods such as equals(), hashCode(), toString() can be added as needed
+
 }

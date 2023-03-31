@@ -1,8 +1,9 @@
-
+package cw;
+//Necessary Imports
+import java.awt.*; 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.Component;
-import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -10,30 +11,17 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
-import java.awt.BorderLayout;
 import javax.swing.JRadioButton;
 import javax.swing.ButtonGroup;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JOptionPane;
-import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
 
-/**
- * A simple Swing-based client for the chat server. Graphically it is a frame with a text
- * field for entering messages and a textarea to see the whole dialog.
- *
- * The client follows the following Chat Protocol. When the server sends "SUBMITNAME" the
- * client replies with the desired screen name. The server will keep sending "SUBMITNAME"
- * requests as long as the client submits screen names that are already in use. When the
- * server sends a line beginning with "NAMEACCEPTED" the client is now allowed to start
- * sending the server arbitrary strings to be broadcast to all chatters connected to the
- * server. When the server sends a line beginning with "MESSAGE" then all characters
- * following this string should be displayed in its message area.
- */
 public class Client {
     String serverAddress;
     Scanner in;
@@ -45,52 +33,64 @@ public class Client {
     ButtonGroup userListButtons = new ButtonGroup();
     Map<Integer, User> users = new HashMap<Integer, User>();
 
-    /**
-     * Constructs the client by laying out the GUI and registering a listener with the
-     * textfield so that pressing Return in the listener sends the textfield contents
-     * to the server. Note however that the textfield is initially NOT editable, and
-     * only becomes editable AFTER the client receives the NAMEACCEPTED message from
-     * the server.
-     */
     public Client(String serverAddress) {
         this.serverAddress = serverAddress;
 
         textField.setEditable(false);
         messageArea.setEditable(false);
+//        setting the x, y , width and height of the textfield, message area and user list area.
+        textField.setBounds(150, 410, 330, 30);
+        textField.setColumns(10);
+        messageArea.setBounds(70, 120, 530, 250);
+        userListArea.setBounds(620, 160, 80, 350);
+    
 
-        frame.setLayout(new GridBagLayout());
-
-        //Message log area.
-        GridBagConstraints chatAreaConstraints = new GridBagConstraints();
-        chatAreaConstraints.anchor = GridBagConstraints.CENTER;
-        chatAreaConstraints.fill = GridBagConstraints.BOTH;
-        chatAreaConstraints.gridx = 1;
-        chatAreaConstraints.gridy = 0;
-        chatAreaConstraints.weightx = 0.7;
-        frame.getContentPane().add(new JScrollPane(messageArea), chatAreaConstraints);
-
-        //Message input field.
-        GridBagConstraints inputFieldConstraints = new GridBagConstraints();
-        inputFieldConstraints.anchor = GridBagConstraints.CENTER;
-        inputFieldConstraints.fill = GridBagConstraints.BOTH;
-        inputFieldConstraints.gridx = 1;
-        inputFieldConstraints.gridy = 1;
-        inputFieldConstraints.weightx = 0.7;
-        frame.getContentPane().add(textField, inputFieldConstraints);
-
-        //User list.
-        GridBagConstraints userListConstraints = new GridBagConstraints();
-        userListConstraints.anchor = GridBagConstraints.CENTER;
-        userListConstraints.fill = GridBagConstraints.BOTH;
-        userListConstraints.gridx = 0;
-        userListConstraints.gridy = 0;
-        userListConstraints.gridheight = 2;
-        userListConstraints.weightx = 0.3;
+        frame.setLayout(null);
+        
+        // User Details Button
+        JButton button = new JButton("Get User Details");
+        button.setBounds(620, 90, 200,40);
+        userListArea.add(button);
+        button.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent e) {
+        		for (User user: users.values()) {
+                   out.println("/details " + " > ID: " + user.getId() + " , Name: " + user.getName() + " , IP Address: " + user.getAddress());
+            	}
+            }
+        });
+        
+        JLabel title = new JLabel("Welcome to ChatBox");
+        title.setFont(new Font("Arial", Font.PLAIN, 30));
+        title.setBounds(250, 30, 400,50);
+		frame.getContentPane().add(title);
+        
+        JLabel lblNewLabel = new JLabel("Send Message:");
+		lblNewLabel.setBounds(620, 130, 200,50);
+		lblNewLabel.setFont(new Font("Arial", Font.PLAIN, 15));
+		frame.getContentPane().add(lblNewLabel);
+		
+		JLabel lblNewLabel_1 = new JLabel("Message:");
+		lblNewLabel_1.setBounds(70, 100, 200, 16);
+		frame.getContentPane().add(lblNewLabel_1);
+		
+		JLabel lblNewLabel_3 = new JLabel("Press enter to send message !..");
+		lblNewLabel_3.setBounds(150, 390, 200, 16);
+		frame.getContentPane().add(lblNewLabel_3);
+		
+		JLabel lblNewLabel_2 = new JLabel("Type Message");
+		lblNewLabel_2.setBounds(50, 410, 200, 16);
+		frame.getContentPane().add(lblNewLabel_2);
+       
+        frame.setLayout(null);
+        frame.getContentPane().add(textField);
+        frame.getContentPane().add(messageArea);
+        frame.getContentPane().add(userListArea);
+        frame.getContentPane().add(button);
         AddUserToPanel(new User(0, "All", "0.0.0.0"));
         userListButtons.getElements().nextElement().setSelected(true);
-        frame.getContentPane().add(new JScrollPane(userListArea), userListConstraints);
 
-        frame.setSize(600, 400);
+
+        frame.setSize(850, 550);
 
         // Send on enter then clear to prepare for next message
         textField.addActionListener(new ActionListener() {
@@ -98,8 +98,10 @@ public class Client {
                 JRadioButton selectedButton = null;
                 for (Component child : userListArea.getComponents())
                 {
+                	
                     if (child instanceof JRadioButton)
                     {
+              
                         JRadioButton button = (JRadioButton)child;
                         if (button.isSelected())
                         {
@@ -111,7 +113,6 @@ public class Client {
                 Integer selectedUserId = (Integer)selectedButton.getClientProperty("user_id");
                 if (selectedUserId == 0)
                 {
-                    //Boradcast.
                     out.println(textField.getText());
                 }
                 else
@@ -125,6 +126,7 @@ public class Client {
         });
     }
 
+    // This function adds a user button to the UI witht the name of the user.
     private void AddUserToPanel(User user)
     {
         //Create the user entry.
@@ -145,14 +147,18 @@ public class Client {
         UpdateUserPanel();
     }
 
+    // This function takes an id as an input and removes the button associated with
+    // that id.
     private void RemoveUserFromPanel(Integer id)
     {
         for (Component child : userListArea.getComponents())
         {
             if (child instanceof JRadioButton)
             {
+            	
                 JRadioButton button = (JRadioButton)child;
-                if (button.getClientProperty("user_id") == id)
+             
+                if (button.getClientProperty("user_id").equals(id))
                 {
                     userListArea.remove(button);
                     userListButtons.remove(button);
@@ -165,7 +171,7 @@ public class Client {
             }
         }
     }
-
+    // This function counts how many current button we have on the client.
     private int GetUsersUICount()
     {
         int count = 0;
@@ -174,7 +180,7 @@ public class Client {
                 count++;
         return count;
     }
-
+    // this function updates the user panel from the UI
     private void UpdateUserPanel()
     {
         //Get the filler.
@@ -205,6 +211,8 @@ public class Client {
         userListArea.revalidate();
     }
 
+    // this function is called every time a new user joins.
+    // it is the function that prompts the user to enter their name
     private String getName() {
         return JOptionPane.showInputDialog(
             frame,
@@ -240,6 +248,9 @@ public class Client {
                 }
                 else if (line.startsWith("USERS"))
                 {
+                	// Here we are updating the list of users for each client
+                	// to contain all the users that are already connected to the server.
+                	
                     users = new HashMap<Integer, User>();
 
                     String[] data = line.substring("USERS".length() + 1).split(","); //+1 to remove the space
@@ -257,6 +268,7 @@ public class Client {
                 else if (line.startsWith("USER"))
                 {
                     //Used for a status update about a connection.
+                	
                     String[] parts = line.substring("USER".length() + 1).split(":");
                     Integer id = Integer.parseInt(parts[0]);
                     String name = parts[1];
@@ -264,9 +276,8 @@ public class Client {
                     if (ipAddress.startsWith("/"))
                         ipAddress = ipAddress.substring(1);
                     boolean status = Boolean.parseBoolean(parts[4]); //Skip 3 as port is sent along with the IP address.
-
                     boolean exists = users.containsKey(id);
-
+                    
                     if (status && !exists) //If they have connected add the user.
                     {
                         User user = new User(id, name, ipAddress);
@@ -279,14 +290,16 @@ public class Client {
                     else if (!status && exists) //They have disconnected, remove them.
                     {
                         users.remove(id);
-
+                        
                         messageArea.append(name + " has disconnected.\n");
-
+                        
                         RemoveUserFromPanel(id);
                     }
                 }
             }
         } finally {
+        	// executed after the socket connection ends,
+        	// we dispose this client.
             if (socket != null)
                 socket.close();
             frame.setVisible(false);
@@ -295,13 +308,7 @@ public class Client {
     }
 
     public static void main(String[] args) throws Exception {
-    	// creates a new client with the ip address from the arguments 
-    
-        // if (args.length != 1) {
-        //     System.err.println("Pass the server IP as the sole command line argument");
-        //     return;
-        // }
-        //String host = "localhost";
+ 
         Client client = new Client("localhost");
         client.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         client.frame.setVisible(true);
