@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 
 <h3 align="center">COMP1549-Networked_Distributed_System Project using Java
 </h3>
