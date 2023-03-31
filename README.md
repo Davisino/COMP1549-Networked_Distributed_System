@@ -26,13 +26,6 @@ This project aims to create a networked distributed system using Java. The syste
 
 To get started with the project, you will need to have Java installed on your machine. You can download the latest version of Java from the official website.
 
-### Prerequisites
-
-What things you need to install the software and how to install them.
-
-```
-Give examples
-```
 
 ### Installing
 
