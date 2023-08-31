@@ -68,3 +68,6 @@ If you would like to contribute to the project, feel free to fork the repository
 ## ⛏️ Built Using <a name = "built_using"></a>
 
 - [Java](https://www.oracle.com/uk/java/) - Programming Language
+
+
+Updated Project with more optimizations: https://github.com/Davisino/COMP1549-Networked_Distributed_System-Public_2
